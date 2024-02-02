@@ -1,6 +1,7 @@
 use magic_crypt::MagicCryptTrait;
 use magic_crypt::new_magic_crypt;
 use magic_crypt::MagicCrypt256;
+use std::error::Error;
 
 #[derive(Clone)]
 pub struct Encryptor {
@@ -9,8 +10,10 @@ pub struct Encryptor {
 
 pub trait EncryptorTrait {
   fn new(key: &str) -> Self;
-  fn encrypt(&self, mcrypt: MagicCrypt256, txt: &str) -> String;
-  fn decrypt(&self, mcrypt: MagicCrypt256, encrypted_string: &String) -> Result<String,String>;
+  fn encrypt(&self, mcrypt: MagicCrypt256, txt: &str) -> Result<String,Box<dyn
+  Error>>;
+  fn decrypt(&self, mcrypt: MagicCrypt256, encrypted_string: &String) -> Result<String,
+  String>;
 }
 
 impl EncryptorTrait for Encryptor {
@@ -23,12 +26,15 @@ impl EncryptorTrait for Encryptor {
     }
   }
 
-  fn encrypt(&self, mcrypt: MagicCrypt256, txt: &str) -> String {
-    let encrypted_string: String = mcrypt.encrypt_str_to_base64(txt);
-    encrypted_string
+  fn encrypt(&self, mcrypt: MagicCrypt256, txt: &str) -> Result<String,
+  Box<dyn
+  Error>> {
+    let encrypted_txt: String = mcrypt.encrypt_str_to_base64(txt);
+    Ok(encrypted_txt)
   }
 
-  fn decrypt(&self, mcrypt: MagicCrypt256, encrypted_string: &String) -> Result<String,String> {
+  fn decrypt(&self, mcrypt: MagicCrypt256, encrypted_string: &String) -> Result<String,
+  String> {
     let decrypted_result = mcrypt.decrypt_base64_to_string(&encrypted_string);
 
     match decrypted_result {

@@ -6,9 +6,7 @@ use std::collections::HashMap;
     description: Option<&str>,
   ) -> HashMap<String,
   String> {
-    let mut response_map = HashMap::new();
-    response_map.insert("result".to_string(), "".to_string());
-
+    let mut response_map = HashMap::with_capacity(3);
     response_map.insert("StatusCode".to_string(), st.to_string());
     response_map.insert("msg".to_string(), msg.to_string());
 

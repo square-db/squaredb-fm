@@ -2,12 +2,11 @@ pub mod fm;
 pub mod disk;
 pub mod table;
 pub mod res;
+pub mod record;
 
 use std::collections::HashMap;
-use disk::disk:: {
-  Disk,
-  DiskTrait
-};
+use disk::disk::Disk;
+use disk::disk::DiskTrait;
 use table::table:: {
   Table,
   TableT
@@ -20,7 +19,6 @@ fn main() {
     /*default_values:*/ HashMap::new(),
     /*required_columns:*/ Vec::new(),
     /*locked_columns:*/ Vec::new(),
-    /*require_admin_columns: */Vec::new(),
     /*data_types: */ HashMap::new(),
   );
 
@@ -29,28 +27,30 @@ fn main() {
     "data".to_string()
   );
 
-  //create Table
-  //println!("{:?}", d.wt("users", users_data));
+  // Create Table
+  println!("{:?}", d.write_table("users", users_data));
 
-  //read Table
-  //println!("{:?}", d.rt("users", "users_data"));
+  // Read Table
+  //println!("{:?}", d.read_table("users", "users_data"));
+
+  // Delete Table
+  //println!("{:?}", d.delete_table("users", "users_data"));
+
+  // Exist Table
+  //println!("{:?}", d.exist_table("users", "users_data"));
+
+  // Read Database
+  //println!("{:?}", d.read_database("users"));
+
+  // Write Database
+  //println!("{:?}", d.write_database("orders"));
+
+  // Rename Database
+  //println!("{:?}", d.rename_database("orders", "orderd"));
+
+  // Delete Database
+  //println!("{:?}", d.delete_database("orderd"));
   
-  //delete Table
-  //println!("{:?}", d.dt("users", "users_data"));
-  
-  //exsit Table
-  //println!("{:?}", d.et("users", "users_data"));
-  
-  //read Databse
-  //println!("{:?}", d.rdb("users"));
-  
-  //write Databse
-  //println!("{:?}", d.wdb("orders"));
-  
-  //rename Databse
-  //println!("{:?}", d.redb("orders", "orderd"));
-  
-  //delete Databse
-  //println!("{:?}", d.dd("orders"));
-  
+  // exist Database
+  //println!("{:?}", d.exist_database("orderd"));
 }

@@ -2,10 +2,6 @@ use serde:: {
   Serialize,
   Deserialize
 };
-use chrono:: {
-  Utc,
-  DateTime
-};
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -16,10 +12,8 @@ pub struct Table {
   String>,
   pub required_columns: Vec<String>,
   pub locked_columns: Vec<String>,
-  pub require_admin_columns: Vec<String>,
   pub data_types: HashMap<String,
   String>,
-  pub _stamp: String,
 }
 
 pub trait TableT {
@@ -29,7 +23,6 @@ pub trait TableT {
     default_values: HashMap<String, String>,
     required_columns: Vec<String>,
     locked_columns: Vec<String>,
-    require_admin_columns: Vec<String>,
     data_types: HashMap<String, String>,
   ) -> Self;
 
@@ -46,15 +39,8 @@ impl TableT for Table {
     default_values: HashMap<String, String>,
     required_columns: Vec<String>,
     locked_columns: Vec<String>,
-    require_admin_columns: Vec<String>,
     data_types: HashMap<String, String>,
   ) -> Self {
-    // Get the current UTC time
-    let current_utc_time: DateTime<Utc> = Utc::now();
-
-    // Format the time as a String
-    let timestamp_string: String = current_utc_time.format("%Y-%m-%d %H:%M:%S").to_string();
-
     Table {
       name: name.to_string(),
       // Initialize other fields accordingly
@@ -62,9 +48,7 @@ impl TableT for Table {
       default_values,
       required_columns,
       locked_columns,
-      require_admin_columns,
       data_types,
-      _stamp: timestamp_string,
     }
   }
 
