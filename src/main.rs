@@ -4,53 +4,72 @@ pub mod table;
 pub mod res;
 pub mod record;
 
+use std::time::Instant;
 use std::collections::HashMap;
 use disk::disk::Disk;
 use disk::disk::DiskTrait;
 use table::table:: {
-  Table,
-  TableT
+Table,
+TableT
+};
+use crate::record::record:: {
+Record,
+RecordT
 };
 
 fn main() {
-  let users_data: Table = Table::new(
-    /*name:*/ "users_data",
-    /* row_names:*/ Vec::new(),
-    /*default_values:*/ HashMap::new(),
-    /*required_columns:*/ Vec::new(),
-    /*locked_columns:*/ Vec::new(),
-    /*data_types: */ HashMap::new(),
-  );
+let start_time = Instant::now();
+let users_data: Table = Table::new(
+/*name:*/ "users_data",
+/* row_names:*/ Vec::new(),
+/*default_values:*/ HashMap::new(),
+/*required_columns:*/ Vec::new(),
+/*locked_columns:*/ Vec::new(),
+/*data_types: */ HashMap::new(),
+);
 
-  let d: Disk = Disk::new(
-    "passw".to_string(),
-    "data".to_string()
-  );
+let record: Record = Record::new(
+HashMap::new()
+);
 
-  // Create Table
-  println!("{:?}", d.write_table("users", users_data));
+let d: Disk = Disk::new(
+"passw".to_string(),
+"data".to_string()
+);
 
-  // Read Table
-  //println!("{:?}", d.read_table("users", "users_data"));
+// Create Table
+println!("{:?}", d.write_table("users", users_data));
 
-  // Delete Table
-  //println!("{:?}", d.delete_table("users", "users_data"));
+// Read Table
+//println!("{:?}", d.read_table("users", "users_data"));
 
-  // Exist Table
-  //println!("{:?}", d.exist_table("users", "users_data"));
+// Delete Table
+//println!("{:?}", d.delete_table("users", "users_data"));
 
-  // Read Database
-  //println!("{:?}", d.read_database("users"));
+// Exist Table
+//println!("{:?}", d.exist_table("users", "users_data"));
 
-  // Write Database
-  //println!("{:?}", d.write_database("orders"));
+// Read Database
+//println!("{:?}", d.read_database("users"));
 
-  // Rename Database
-  //println!("{:?}", d.rename_database("orders", "orderd"));
+// Write Database
+//println!("{:?}", d.write_database("orders"));
 
-  // Delete Database
-  //println!("{:?}", d.delete_database("orderd"));
-  
-  // exist Database
-  //println!("{:?}", d.exist_database("orderd"));
+// Rename Database
+//println!("{:?}", d.rename_database("orders", "orderd"));
+
+// Delete Database
+//println!("{:?}", d.delete_database("orderd"));
+
+// exist Database
+//println!("{:?}", d.exist_database("orderd"));
+
+//write records
+//println!("{:?}", d.write_record("users", "users_data",record));
+
+//read records
+//println!("{:?}", d.read_record("users", "users_data"));
+
+let elapsed_time = start_time.elapsed();
+println!("Time taken: {:?}", elapsed_time);
 }
