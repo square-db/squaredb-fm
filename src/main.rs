@@ -67,14 +67,17 @@ let d: Disk = Disk::new(
 //println!("{:?}", d.exist_database("orderd"));
 
 //write records
-println!("{:?}", d.write_record("users", "users_data", record.clone()));
+//println!("{:?}", d.write_record("users", "users_data", record.clone()));
 
 //read records
-//let records =  d.read_record("users", "users_data").unwrap_or_else(|_| Vec::new() );
-//println!("{:?}", &records);
+let records =  d.read_record("users", "users_data").unwrap_or_else(|_| Vec::new() );
+println!("{:?}", &records);
 
 //update records
 //println!("{:?}", d.update_record(records[1].clone(), record.clone()));
+
+//delete records
+println!("{:?}", d.delete_record(records[3].clone()));
 
 
 let elapsed_time = start_time.elapsed();

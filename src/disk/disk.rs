@@ -80,6 +80,9 @@ pub trait DiskTrait {
   fn update_record(&self, record: Record, record_new: Record) -> Result<(),
   HashMap<String,
   String>>;
+  fn delete_record(&self, record: Record) -> Result<(),
+  HashMap<String,
+  String>>;
 }
 
 impl DiskTrait for Disk {
@@ -357,5 +360,22 @@ impl DiskTrait for Disk {
       },
       Err(err) => Err(create_response("500", "Error: Failed to read record.", Some(&err.to_string())))
     }
+  }
+
+  fn delete_record(&self, record: Record) -> Result<(),
+  HashMap<String,
+  String>> {
+    let path: String = record.read_from;
+    let index: isize = record.index;
+    if let Err(err) = self.check_existence(&path) {
+      return Err(err);
+    }
+    if path.is_empty() || index == -1 {
+      return Err(create_response("500", "Error: Failed to read record.", None));
+    }
+     if let Err(err) = FsApi::delete_content_in_file(&path, index as usize) {
+      return Err(create_response("500", "Error: Failed to update record.", Some(&err.to_string())));
+    }
+    Ok(())
   }
 }
