@@ -20,6 +20,8 @@ pub trait FsApiTrait {
   String>;
   fn append_file(path: &str, content: &str) -> Result<(),
   String>;
+  fn update_file(path: &str, index: usize, new_content: Vec<u8>) -> Result<(),
+  String>;
   fn ddel(path: &str, force: bool) -> Result<(),
   String>;
   fn fdel(path: &str) -> Result<(),
@@ -116,6 +118,32 @@ impl FsApiTrait for FsApi {
       Err("OS error: ".to_owned() + &err.to_string())
     } else {
       Ok(())
+    }
+  }
+
+  fn update_file(path: &str, index: usize, new_content: Vec<u8>) -> Result<(),
+  String> {
+    match FsApi::read(path) {
+      Ok(data) => {
+        let bytes: Vec<u8> = data.as_bytes().to_vec();
+        let mut records: Vec<Vec<u8>> = bytes.split(|&byte| byte == b'\n')
+        .map(|slice| slice.to_vec())
+        .collect();
+        records[index] = new_content;
+        let strings: String = records
+        .iter()
+        .map(|subvec| String::from_utf8_lossy(subvec).to_string())
+        .collect::<Vec<_>>()
+        .join("\n");
+        if let Err(err) = FsApi::write(&(path.to_owned()+".tmp"),&strings) {
+          return Err(err);
+        }
+        if let Err(err) = FsApi::rename(&(path.to_owned()+".tmp"),&path) {
+          return Err(err);
+        }
+        Ok(())
+      },
+      Err(err) => Err(err)
     }
   }
 }

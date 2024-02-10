@@ -1,3 +1,4 @@
+// clear && cargo build --release && for i in {1..1000}; do clear && target/release/squaredb_fm; done
 pub mod fm;
 pub mod disk;
 pub mod table;
@@ -27,9 +28,10 @@ let users_data: Table = Table::new(
 /*locked_columns:*/ Vec::new(),
 /*data_types: */ HashMap::new(),
 );
-
+let mut data = HashMap::new();
+data.insert(String::from("Key"), String::from("Value"));
 let record: Record = Record::new(
-HashMap::new()
+  data
 );
 
 let d: Disk = Disk::new(
@@ -38,7 +40,7 @@ let d: Disk = Disk::new(
 );
 
 // Create Table
-println!("{:?}", d.write_table("users", users_data));
+//println!("{:?}", d.write_table("users", users_data));
 
 // Read Table
 //println!("{:?}", d.read_table("users", "users_data"));
@@ -65,10 +67,15 @@ println!("{:?}", d.write_table("users", users_data));
 //println!("{:?}", d.exist_database("orderd"));
 
 //write records
-//println!("{:?}", d.write_record("users", "users_data",record));
+println!("{:?}", d.write_record("users", "users_data", record.clone()));
 
 //read records
-//println!("{:?}", d.read_record("users", "users_data"));
+//let records =  d.read_record("users", "users_data").unwrap_or_else(|_| Vec::new() );
+//println!("{:?}", &records);
+
+//update records
+//println!("{:?}", d.update_record(records[1].clone(), record.clone()));
+
 
 let elapsed_time = start_time.elapsed();
 println!("Time taken: {:?}", elapsed_time);

@@ -5,13 +5,14 @@ use serde:: {
 use std::collections:: {
   HashMap
 };
-use rand::Rng;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Record {
-  inner: HashMap<String,
-  String>
+  pub inner: HashMap<String,
+  String>,
+  pub read_from: String,
+  pub index: isize,
 }
 
 pub trait RecordT {
@@ -25,7 +26,6 @@ pub trait RecordT {
   Self: Sized;
 
   fn to_string(&self) -> String;
-  fn random_stamp() -> String;
 }
 
 impl RecordT for Record {
@@ -33,7 +33,9 @@ impl RecordT for Record {
     inner: HashMap<String, String>
   ) -> Self {
     Record {
-      inner
+      inner,
+      read_from: String::from(""),
+      index: -1
     }
   }
 
@@ -46,18 +48,5 @@ impl RecordT for Record {
   fn to_string(&self) -> String {
     serde_json::to_string(self).unwrap()
   }
-
-  fn random_stamp() -> String {
-    const LENGTH: usize = 100;
-    const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let mut rng = rand::thread_rng();
-    let password: String = (0..LENGTH)
-    .map(|_| {
-      let idx = rng.gen_range(0..CHARSET.len());
-      CHARSET[idx] as char
-    })
-    .collect();
-
-    password
-  }
+  
 }
