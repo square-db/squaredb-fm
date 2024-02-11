@@ -1,6 +1,6 @@
 [package]
 name = "squaredb_fm"
-version = "0.1.0"
+version = "1.0.0-beta"
 edition = "2021"
 description = "Squaredb - Enhance your DB with extendability and performance."
 categories = ["squaredb", "db", "fm"]
