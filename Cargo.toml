@@ -24,7 +24,6 @@ rpath = false
 
 
 [dependencies]
-chrono = "0.4.33"
 futures = "0.3.30"
 magic-crypt = "3.1.13"
 rayon = "1.8.1"

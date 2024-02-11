@@ -3,6 +3,6 @@
 
 pub mod fm;
 pub mod disk;
-pub mod res;
 pub mod table;
+pub mod res;
 pub mod record;

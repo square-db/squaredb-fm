@@ -30,6 +30,8 @@ pub trait FsApiTrait {
   String>;
   fn exist(path: &str) -> Result<(),
   String>;
+  fn copy(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(),
+  String>;
   fn read(path: &str) -> Result<String,
   String>;
   fn write(path: &str, content: &str) -> Result<(),
@@ -137,10 +139,10 @@ impl FsApiTrait for FsApi {
         .map(|subvec| String::from_utf8_lossy(subvec).to_string())
         .collect::<Vec<_>>()
         .join("\n");
-        if let Err(err) = FsApi::write(&(path.to_owned()+".tmp"),&strings) {
+        if let Err(err) = FsApi::write(&(path.to_owned()+".tmp"), &strings) {
           return Err(err);
         }
-        if let Err(err) = FsApi::rename(&(path.to_owned()+".tmp"),&path) {
+        if let Err(err) = FsApi::rename(&(path.to_owned()+".tmp"), &path) {
           return Err(err);
         }
         Ok(())
@@ -148,7 +150,7 @@ impl FsApiTrait for FsApi {
       Err(err) => Err(err)
     }
   }
-  
+
   fn delete_content_in_file(path: &str, index: usize) -> Result<(),
   String> {
     match FsApi::read(path) {
@@ -163,15 +165,39 @@ impl FsApiTrait for FsApi {
         .map(|subvec| String::from_utf8_lossy(subvec).to_string())
         .collect::<Vec<_>>()
         .join("\n");
-        if let Err(err) = FsApi::write(&(path.to_owned()+".tmp"),&strings) {
+        if let Err(err) = FsApi::write(&(path.to_owned()+".tmp"), &strings) {
           return Err(err);
         }
-        if let Err(err) = FsApi::rename(&(path.to_owned()+".tmp"),&path) {
+        if let Err(err) = FsApi::rename(&(path.to_owned()+".tmp"), &path) {
           return Err(err);
         }
         Ok(())
       },
       Err(err) => Err(err)
     }
+  }
+
+  fn copy(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(),
+  String> {
+    fs::create_dir_all(&dst).map_err(|e| format!("Failed to create directory: {}", e))?;
+
+    // Iterate over the entries in the source directory
+    for entry in fs::read_dir(src).map_err(|e| format!("Failed to read directory: {}", e))? {
+      let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
+      let metadata = entry.metadata().map_err(|e| format!("Failed to get metadata: {}", e))?;
+
+      // Construct the destination path
+      let dst_path = dst.as_ref().join(entry.file_name());
+
+      // Check if the entry is a directory
+      if metadata.is_dir() {
+        // Recursively copy the directory
+        Self::copy(entry.path(), &dst_path).map_err(|e| format!("Failed to copy directory: {}", e))?;
+      } else {
+        // Copy the file
+        fs::copy(entry.path(), &dst_path).map_err(|e| format!("Failed to copy file: {}", e))?;
+      }
+    }
+    Ok(())
   }
 }
