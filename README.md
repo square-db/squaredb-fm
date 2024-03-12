@@ -16,4 +16,16 @@
     <a href="https://dev.to/square_db"><img src="https://img.shields.io/badge/dev-join_us-86f7b7.svg?style=flat-square"></a>
 </p>
 
-<center>This library isnot for public use and doesnot have a documentation<center>
+<center>This library isnot for public use and doesnot have a documentation</center>
+
+# Release Notes
+
+## V1.0.0-beta
+   - Inital Release
+## V1.0.2-beta
+   - [] Introducing write and read Locks
+   - [] Introducing read in Ranges 
+   - [] Introducing B+Tree format for records
+   - [] Introducong Log
+   - Bug fixes:
+     - Removed unused method by FsApi

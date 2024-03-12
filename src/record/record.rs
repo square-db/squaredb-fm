@@ -3,21 +3,19 @@ use serde:: {
   Deserialize,
 };
 use std::collections:: {
-  HashMap
+  BTreeMap
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Record {
-  pub inner: HashMap<String,
-  String>,
-  pub read_from: String,
-  pub index: isize,
+  pub inner: BTreeMap<String,
+  String>
 }
 
 pub trait RecordT {
   fn new(
-    inner: HashMap<String, String>,
+    inner: BTreeMap<String, String>,
   ) -> Self;
 
   fn to_record(data: &str) -> Result<Self,
@@ -30,15 +28,13 @@ pub trait RecordT {
 
 impl RecordT for Record {
   fn new(
-    inner: HashMap<String, String>
+    inner: BTreeMap<String, String>
   ) -> Self {
     Record {
-      inner,
-      read_from: String::from(""),
-      index: -1
+      inner: inner.clone()
     }
   }
-
+  
   fn to_record(data: &str) -> Result<Self,
   serde_json::Error> {
     serde_json::from_str(data)

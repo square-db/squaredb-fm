@@ -6,3 +6,4 @@ pub mod disk;
 pub mod table;
 pub mod res;
 pub mod record;
+pub mod lsm;

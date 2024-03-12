@@ -3,7 +3,7 @@ use magic_crypt::new_magic_crypt;
 use magic_crypt::MagicCrypt256;
 use std::error::Error;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Encryptor {
   pub instance: MagicCrypt256
 }
@@ -36,11 +36,9 @@ impl EncryptorTrait for Encryptor {
   fn decrypt(&self, mcrypt: MagicCrypt256, encrypted_string: &String) -> Result<String,
   String> {
     let decrypted_result = mcrypt.decrypt_base64_to_string(&encrypted_string);
-
     match decrypted_result {
       Ok(decrypt_text) => Ok(decrypt_text),
       Err(err) => Err(err.to_string()),
     }
-
   }
 }
