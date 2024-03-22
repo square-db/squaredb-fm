@@ -10,86 +10,99 @@ use std:: {
     Read,
     Write
   },
-  path::Path
+  path:: {
+    Path
+  }
+};
+use crate::err::err:: {
+  FmError
 };
 
 pub struct FsApi;
 
 pub trait FsApiTrait {
-  fn ddel(path: &str, force: bool) -> Result<(),
-  String>;
-  fn exist(path: &str) -> Result<(),
-  String>;
-  fn read(path: &str) -> Result<String,
-  String>;
-  fn write(path: &str, content: &str) -> Result<(),
-  String>;
-  fn rename(path: &str, new_path: &str) -> Result<(),
-  String>;
-  fn create_dir(path: &str) -> Result<(),
-  String>;
-  fn read_dir(path: &str) -> Result<Vec<String>,
-  String>;
+  fn ddel(path: &Path, force: bool) -> Result<(),
+  FmError>;
+  fn exist(path: &Path) -> Result<(),
+  FmError>;
+  fn read(path: &Path) -> Result<String,
+  FmError>;
+  fn write(path: &Path, content: &str) -> Result<(),
+  FmError>;
+  fn rename(path: &Path, new_path: &Path) -> Result<(),
+  FmError>;
+  fn create_dir(path: &Path) -> Result<(),
+  FmError>;
+  fn read_dir(path: &Path) -> Result<Vec<String>,
+  FmError>;
 }
 
 impl FsApiTrait for FsApi {
-
-  fn read(path: &str) -> Result<String,
-  String> {
+  fn read(path: &Path) -> Result<String,
+  FmError> {
     let mut buffer = Vec::new();
-    BufReader::new(File::open(path).map_err(|err| "OS error: ".to_owned() + &err.to_string())?)
-    .read_to_end(&mut buffer)
-    .map(|_| String::from_utf8_lossy(&buffer).to_string())
-    .map_err(|_| "OS Error: Cannot read file!".to_string())
+    
+    if let Ok(file) = File::open(path) {
+      if let Ok(_) = BufReader::new(file).read_to_end(&mut buffer) {
+        if let Ok(contents) = String::from_utf8(buffer) {
+          return Ok(contents);
+        } else {
+          return Err(FmError::Utf8Error);
+        }
+      } else {
+        return Err(FmError::OsError);
+      }
+    } else {
+      return Err(FmError::OsError);
+    }
   }
 
-  fn write(path: &str, content: &str) -> Result<(),
-  String> {
-    let parent_dir = Path::new(path).parent().ok_or_else( || "OS error: Failure when attempting to write!".to_string())?;
-    fs::create_dir_all(parent_dir).map_err(|err| "OS error: ".to_owned() + &err.to_string())?;
-
+  fn write(path: &Path, content: &str) -> Result<(),
+  FmError> {
+    let parent_dir = path.parent().ok_or(FmError::OsError)?;
+    fs::create_dir_all(parent_dir).map_err(|_| FmError::OsError)?;
     OpenOptions::new()
     .write(true)
     .create(true)
     .truncate(true)
     .open(path)
-    .map_err(|err| "OS error: ".to_owned() + &err.to_string())
-    .and_then(|file| BufWriter::new(file).write_all(content.as_bytes()).map_err(|err| "OS error: ".to_owned() + &err.to_string()))
+    .map_err(|_| FmError::OsError)
+    .and_then(|file| BufWriter::new(file).write_all(content.as_bytes()).map_err(|_| FmError::IoError))
   }
 
-  fn ddel(path: &str, force: bool) -> Result<(),
-  String> {
+  fn ddel(path: &Path, force: bool) -> Result<(),
+  FmError> {
     let remove_result = if force {
       fs::remove_dir_all(path)
     } else {
       fs::remove_dir(path)
     };
-    remove_result.map_err(|err| "OS error: ".to_owned() + &err.to_string())
+    remove_result.map_err(|_| FmError::OsError)
   }
 
-  fn exist(path: &str) -> Result<(),
-  String> {
-    fs::metadata(path).map(|_| ()).map_err(|_| "Eof Error: Cannot find it on OS level!".to_string())
+  fn exist(path: &Path) -> Result<(),
+  FmError> {
+    fs::metadata(path).map(|_| ()).map_err(|_| FmError::EofError)
   }
 
-  fn create_dir(path: &str) -> Result<(),
-  String> {
-    fs::create_dir_all(path).map_err(|err| "OS error: ".to_owned() + &err.to_string()).map(|_| ())
+  fn create_dir(path: &Path) -> Result<(),
+  FmError> {
+    fs::create_dir_all(path).map_err(|_| FmError::OsError)
   }
 
-  fn read_dir(path: &str) -> Result<Vec<String>,
-  String> {
+  fn read_dir(path: &Path) -> Result<Vec<String>,
+  FmError> {
     fs::read_dir(path)
-    .map_err(|_| "OS Error: Cannot read sub dirs!".to_string())
-    .map(|entries| entries.filter_map(|entry| entry.ok().and_then(|e| e.file_name().into_string().ok())).collect())
+    .map_err(|_| FmError::OsError)
+    .map(|entries| {
+      entries
+      .filter_map(|entry| entry.ok().and_then(|e| e.file_name().into_string().ok()))
+      .collect()
+    })
   }
 
-  fn rename(path: &str, new_path: &str) -> Result<(),
-  String> {
-    if let Err(err) = fs::rename(path, new_path) {
-      Err("OS error: ".to_owned() + &err.to_string())
-    } else {
-      Ok(())
-    }
+  fn rename(path: &Path, new_path: &Path) -> Result<(),
+  FmError> {
+    fs::rename(path, new_path).map_err(|_| FmError::OsError)
   }
 }

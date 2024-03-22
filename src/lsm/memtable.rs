@@ -2,43 +2,35 @@ use std::collections:: {
   BTreeMap,
   HashMap
 };
-use crate::disk::diskenc:: {
-  DiskEnc,
-  DiskEncT
-};
 
 pub const CAPACITY: usize = 10;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Memtable {
   pub inner: BTreeMap<String,
-  BTreeMap<u64,
-  String>>,
-  pub enc: DiskEnc
+    BTreeMap<String,Vec<String>>>,
 }
 
 pub trait MemtableT {
-  fn new(encryption_system: &DiskEnc) -> Self;
+  fn new() -> Self;
   fn exist_table(&self, path: &str) -> bool;
   fn is_full(&mut self, path: &str) -> bool;
   fn delete_table(&mut self, path: &str);
   fn write_table(&mut self, path: &str);
-  fn read_table(&self, path: &str) -> Option<BTreeMap<u64,
-  String>>;
+  fn read_table(&self, path: &str) -> Option<BTreeMap<String,
+  Vec<String>>>;
   fn flush_table(&mut self, path: &str);
-  fn write_record(&mut self, path: &str, record: &str) -> Result<(),
+  fn write_record(&mut self, path: &str, record: Vec<String>) -> Result<(),
   HashMap<String,
   String>>;
 }
 
 impl MemtableT for Memtable {
-  fn new(encryption_system: &DiskEnc) -> Self {
+  fn new() -> Self {
     let data: BTreeMap<String,
-    BTreeMap<u64,
-    String>> = BTreeMap::new();
+    BTreeMap<String,Vec<String>>> = BTreeMap::new();
     Self {
-      inner: data,
-      enc: encryption_system.clone()
+      inner: data
     }
   }
 
@@ -50,15 +42,15 @@ impl MemtableT for Memtable {
     }
   }
 
-  fn read_table(&self, path: &str) -> Option<BTreeMap<u64,
-  String>> {
+  fn read_table(&self, path: &str) -> Option<BTreeMap<String,
+  Vec<String>>> {
     self.inner.get(path).cloned()
   }
 
   fn write_table(&mut self, path: &str) {
-    let table_data: BTreeMap<u64,
-    String> = BTreeMap::new();
-    &mut self.inner.insert(path.to_string(), table_data);
+    let table_data: BTreeMap<String,
+    Vec<String>> = BTreeMap::new();
+    self.inner.insert(path.to_string(), table_data);
   }
 
   fn exist_table(&self, path: &str) -> bool {
@@ -77,15 +69,12 @@ impl MemtableT for Memtable {
     self.inner.insert((&path).to_string(), BTreeMap::new());
   }
 
-  fn write_record(&mut self, path: &str, record: &str) -> Result<(),
+  fn write_record(&mut self, path: &str, record: Vec<String>) -> Result<(),
   HashMap<String,
   String>> {
-    // Generate the next key
-    let next_key = match self.inner.get_mut(path).unwrap().keys().last() {
-      Some(&max_key) => max_key + 1,
-      None => 1,
-    };
-    self.inner.get_mut(path).unwrap().insert(next_key, record.to_string());
+    //[Alice, 12, female]
+    //[Ahmed, 11, male]
+    self.inner.get_mut(path).unwrap().insert(record[0].clone(), record);
     Ok(())
   }
 }

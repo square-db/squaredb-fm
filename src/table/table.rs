@@ -28,8 +28,10 @@ pub trait TableT {
 
   fn to_table(data: &String) -> Result<Self,
   serde_json::Error> where Self: Sized;
-
+  
   fn to_string(&self) -> String;
+  
+  fn default_table() -> Self;
 }
 
 impl TableT for Table {
@@ -59,5 +61,23 @@ impl TableT for Table {
 
   fn to_string(&self) -> String {
     serde_json::to_string(self).unwrap()
+  }
+
+  fn default_table() -> Self {
+    let name = String::from("default");
+    let row_names = Vec::new();
+    let default_values = HashMap::new();
+    let required_columns = Vec::new();
+    let locked_columns = Vec::new();
+    let data_types = HashMap::new();
+
+    Table {
+      name,
+      row_names,
+      default_values,
+      required_columns,
+      locked_columns,
+      data_types,
+    }
   }
 }
