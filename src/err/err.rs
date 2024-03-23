@@ -38,4 +38,8 @@ pub enum FmError {
     IoError,
     #[error("Eof Error: Couldnot open file Failed!")]
     EofError,
+    #[error("Lock Guard Error: Timout exceeded when attempting to aquire a write/read lock!")]
+    LockTimeout,
+    #[error("Memory Error: Table was not found in the memtable!")]
+    TableNotFoundInMemory,
 }

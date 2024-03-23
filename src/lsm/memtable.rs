@@ -1,80 +1,104 @@
-use std::collections:: {
-  BTreeMap,
-  HashMap
+use std::collections::BTreeMap;
+use parking_lot:: {
+  Mutex,
+  RwLock,
+  deadlock
 };
+use std::time::Duration;
+use crate::err::err::FmError;
 
 pub const CAPACITY: usize = 10;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Memtable {
-  pub inner: BTreeMap<String,
-    BTreeMap<String,Vec<String>>>,
+  pub inner: RwLock<BTreeMap<String,
+  Mutex<BTreeMap<String,
+  Vec<String>>>>>,
 }
 
 pub trait MemtableT {
   fn new() -> Self;
   fn exist_table(&self, path: &str) -> bool;
-  fn is_full(&mut self, path: &str) -> bool;
+  fn is_full(&self, path: &str) -> bool;
   fn delete_table(&mut self, path: &str);
   fn write_table(&mut self, path: &str);
   fn read_table(&self, path: &str) -> Option<BTreeMap<String,
   Vec<String>>>;
-  fn flush_table(&mut self, path: &str);
+  fn flush_table(&mut self, path: &str) -> Result<(),
+  FmError>;
   fn write_record(&mut self, path: &str, record: Vec<String>) -> Result<(),
-  HashMap<String,
-  String>>;
+  FmError>;
 }
 
 impl MemtableT for Memtable {
   fn new() -> Self {
     let data: BTreeMap<String,
-    BTreeMap<String,Vec<String>>> = BTreeMap::new();
+    Mutex<BTreeMap<String,
+    Vec<String>>>> = BTreeMap::new();
     Self {
-      inner: data
+      inner: RwLock::new(data),
     }
   }
 
-  fn is_full(&mut self, path: &str) -> bool {
-    if self.inner.get(path).unwrap().len() >= CAPACITY {
-      return true;
-    }else {
-      return false;
+  fn is_full(&self, path: &str) -> bool {
+    let lock = self.inner.read();
+    if let Some(table) = lock.get(path) {
+      table.lock().len() >= CAPACITY
+    } else {
+      false
     }
   }
 
   fn read_table(&self, path: &str) -> Option<BTreeMap<String,
   Vec<String>>> {
-    self.inner.get(path).cloned()
+    let lock = self.inner.read();
+    lock.get(path).map(|table| table.lock().clone())
   }
 
   fn write_table(&mut self, path: &str) {
-    let table_data: BTreeMap<String,
-    Vec<String>> = BTreeMap::new();
-    self.inner.insert(path.to_string(), table_data);
+    let mut lock = self.inner.write();
+    lock.insert(path.to_string(), Mutex::new(BTreeMap::new()));
   }
 
   fn exist_table(&self, path: &str) -> bool {
-    if let Some(_) = self.inner.get(path) {
-      return true;
-    }else {
-      return false;
-    }
+    let lock = self.inner.read();
+    lock.contains_key(path)
   }
 
   fn delete_table(&mut self, path: &str) {
-    self.inner.remove(path);
+    let mut lock = self.inner.write();
+    lock.remove(path);
   }
-  
-  fn flush_table(&mut self, path: &str) {
-    self.inner.insert((&path).to_string(), BTreeMap::new());
+
+  fn flush_table(&mut self, path: &str) -> Result<(),
+  FmError> {
+    let timeout = Duration::from_millis(10);
+    let lock = self.inner.write();
+    if let Some(table) = lock.get(path) {
+      if let Some(mut inner_lock) = table.try_lock_for(timeout) {
+        inner_lock.clear();
+        Ok(())
+      } else {
+        return Err(FmError::LockTimeout);
+      }
+    } else {
+      return Err(FmError::TableNotFoundInMemory);
+    }
   }
 
   fn write_record(&mut self, path: &str, record: Vec<String>) -> Result<(),
-  HashMap<String,
-  String>> {
-    //[Alice, 12, female]
-    //[Ahmed, 11, male]
-    self.inner.get_mut(path).unwrap().insert(record[0].clone(), record);
-    Ok(())
+  FmError> {
+    let timeout = Duration::from_millis(100);
+    let lock = self.inner.write();
+    if let Some(table) = lock.get(path) {
+      if let Some(mut inner_lock) = table.try_lock_for(timeout) {
+        inner_lock.insert(record[0].clone(), record);
+        return Ok(());
+      } else {
+        return Err(FmError::LockTimeout);
+      }
+    } else {
+      Err(FmError::TableNotFoundInMemory)
+    }
   }
 }

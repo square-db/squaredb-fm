@@ -72,19 +72,18 @@ impl DiskTrait for Disk {
     }
   }
 
-  fn write_record(&mut self, db: &str, table_name: &str, record: Vec<String>) -> Result<(),
+  fn write_record(&mut self, db: &str, table_name: &str, _record: Vec<String>) -> Result<(),
   FmError> {
     let path: &Path = &self.format_path(&[db, table_name]);
-    let mut memory = self.memory.clone(); // Clone self.memory before moving into the closure
     self.check_existence(&path)
     .and_then(|_| {
       let path_string = path.to_string_lossy().to_string();
-      if !memory.exist_table(&path_string) {
-        memory.write_table(&path_string);
+      if !self.memory.exist_table(&path_string) {
+        self.memory.write_table(&path_string);
       }
-      if memory.is_full(&path_string) {
-        if let Some(data) = memory.read_table(&path_string) {
-          memory.flush_table(&path_string);
+      if self.memory.is_full(&path_string) {
+        if let Some(_data) = self.memory.read_table(&path_string) {
+          self.memory.flush_table(&path_string);
         } else {
           return Err(FmError::MemoryReadError);
         }
@@ -106,7 +105,6 @@ impl DiskTrait for Disk {
     let mut path = PathBuf::new();
     path.push(&self.path);
     path.push(DB_DIRECTORY);
-    println!("{:?}", path);
     for component in components {
         path.push(component);
     }
@@ -135,7 +133,7 @@ impl DiskTrait for Disk {
 
   fn write_table(&mut self, db: &str, table: Table) -> Result<(),
   FmError> {
-    let path: &Path = &self.format_path(&[db, &table.name, &format!("{}.ifrm", &table.name)]);
+    let path: &Path = &self.format_path(&[db, &table.name, &format!("n1-{}.ifrm", &table.name)]);
     let encrypted_table = self.enc.encrypt(&table.to_string())?;
 
     FsApi::write(&path, &encrypted_table)
@@ -148,7 +146,7 @@ impl DiskTrait for Disk {
 
   fn read_table(&self, db: &str, table_name: &str) -> Result<Table,
   FmError> {
-    let path: &Path = &self.format_path(&[db, table_name, &format!("{}.ifrm",
+    let path: &Path = &self.format_path(&[db, table_name, &format!("n1-{}.ifrm",
       &table_name)]);
 
     self.check_existence(&path)
@@ -165,7 +163,6 @@ impl DiskTrait for Disk {
   fn write_database(&self, db: &str) -> Result<(),
   FmError> {
     let path: &Path = &self.format_path(&[db]);
-    println!("{:?}", path);
     FsApi::create_dir(&path)
     .map_err(|_| FmError::DatabaseCreationError)
   }
@@ -173,7 +170,6 @@ impl DiskTrait for Disk {
   fn read_database(&self, db: &str) -> Result<Vec<String>,
   FmError> {
     let path: &Path = &self.format_path(&[db]);
-
     self.check_existence(&path)
     .and_then(|_| FsApi::read_dir(&path).map_err(|_| FmError::DatabaseReadError))
   }

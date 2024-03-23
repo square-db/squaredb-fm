@@ -41,7 +41,7 @@ impl FsApiTrait for FsApi {
   fn read(path: &Path) -> Result<String,
   FmError> {
     let mut buffer = Vec::new();
-    
+
     if let Ok(file) = File::open(path) {
       if let Ok(_) = BufReader::new(file).read_to_end(&mut buffer) {
         if let Ok(contents) = String::from_utf8(buffer) {
@@ -61,13 +61,19 @@ impl FsApiTrait for FsApi {
   FmError> {
     let parent_dir = path.parent().ok_or(FmError::OsError)?;
     fs::create_dir_all(parent_dir).map_err(|_| FmError::OsError)?;
-    OpenOptions::new()
+    
+    let file = OpenOptions::new()
     .write(true)
     .create(true)
     .truncate(true)
     .open(path)
-    .map_err(|_| FmError::OsError)
-    .and_then(|file| BufWriter::new(file).write_all(content.as_bytes()).map_err(|_| FmError::IoError))
+    .map_err(|_| FmError::OsError)?;
+    let mut writer = BufWriter::new(file);
+    writer
+    .write_all(content.as_bytes())
+    .map_err(|_| FmError::IoError)?;
+    writer.flush().map_err(|_| FmError::IoError)?;
+    Ok(())
   }
 
   fn ddel(path: &Path, force: bool) -> Result<(),
