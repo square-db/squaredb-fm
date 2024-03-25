@@ -1,8 +1,7 @@
 use std::collections::BTreeMap;
 use parking_lot:: {
   Mutex,
-  RwLock,
-  deadlock
+  RwLock
 };
 use std::time::Duration;
 use crate::err::err::FmError;
@@ -12,7 +11,7 @@ pub const CAPACITY: usize = 10;
 #[derive(Debug)]
 pub struct Memtable {
   pub inner: RwLock<BTreeMap<String,
-  Mutex<BTreeMap<String,
+  Mutex<BTreeMap<u64,
   Vec<String>>>>>,
 }
 
@@ -22,7 +21,7 @@ pub trait MemtableT {
   fn is_full(&self, path: &str) -> bool;
   fn delete_table(&mut self, path: &str);
   fn write_table(&mut self, path: &str);
-  fn read_table(&self, path: &str) -> Option<BTreeMap<String,
+  fn read_table(&self, path: &str) -> Option<BTreeMap<u64,
   Vec<String>>>;
   fn flush_table(&mut self, path: &str) -> Result<(),
   FmError>;
@@ -33,7 +32,7 @@ pub trait MemtableT {
 impl MemtableT for Memtable {
   fn new() -> Self {
     let data: BTreeMap<String,
-    Mutex<BTreeMap<String,
+    Mutex<BTreeMap<u64,
     Vec<String>>>> = BTreeMap::new();
     Self {
       inner: RwLock::new(data),
@@ -49,7 +48,7 @@ impl MemtableT for Memtable {
     }
   }
 
-  fn read_table(&self, path: &str) -> Option<BTreeMap<String,
+  fn read_table(&self, path: &str) -> Option<BTreeMap<u64,
   Vec<String>>> {
     let lock = self.inner.read();
     lock.get(path).map(|table| table.lock().clone())
@@ -92,7 +91,11 @@ impl MemtableT for Memtable {
     let lock = self.inner.write();
     if let Some(table) = lock.get(path) {
       if let Some(mut inner_lock) = table.try_lock_for(timeout) {
-        inner_lock.insert(record[0].clone(), record);
+        let key_num = match inner_lock.last_key_value() {
+          None => 1,
+          Some((key,_)) => key + 1,
+        };
+        inner_lock.insert(key_num, record);
         return Ok(());
       } else {
         return Err(FmError::LockTimeout);
@@ -101,4 +104,5 @@ impl MemtableT for Memtable {
       Err(FmError::TableNotFoundInMemory)
     }
   }
+
 }

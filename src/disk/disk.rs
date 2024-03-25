@@ -15,11 +15,13 @@ use crate::lsm:: {
   memtable:: {
     Memtable,
     MemtableT
+  },
+  sstable:: {
+    SStableTrait,
+    SStable
   }
 };
-use crate::err::err:: {
-  FmError
-};
+use crate::err::err::FmError;
 use crate::table::table:: {
   Table,
   TableT
@@ -72,7 +74,7 @@ impl DiskTrait for Disk {
     }
   }
 
-  fn write_record(&mut self, db: &str, table_name: &str, _record: Vec<String>) -> Result<(),
+  fn write_record(&mut self, db: &str, table_name: &str, record: Vec<String>) -> Result<(),
   FmError> {
     let path: &Path = &self.format_path(&[db, table_name]);
     self.check_existence(&path)
@@ -82,11 +84,21 @@ impl DiskTrait for Disk {
         self.memory.write_table(&path_string);
       }
       if self.memory.is_full(&path_string) {
-        if let Some(_data) = self.memory.read_table(&path_string) {
-          self.memory.flush_table(&path_string);
+        if let Some(data) = self.memory.read_table(&path_string) {
+          if let Err(err) = self.memory.flush_table(&path_string) {
+            return Err(err);
+          }
+          if let Err(err) = SStable::new(self.enc.clone()).to_sstable(&data, &path_string) {
+            return Err(err);
+          }
         } else {
           return Err(FmError::MemoryReadError);
         }
+      } else {
+        if let Err(err) = self.memory.write_record(&path_string, record) {
+          return Err(err);
+        }
+        return Ok(());
       }
       Ok(())
     })
@@ -106,10 +118,10 @@ impl DiskTrait for Disk {
     path.push(&self.path);
     path.push(DB_DIRECTORY);
     for component in components {
-        path.push(component);
+      path.push(component);
     }
     path
-}
+  }
 
 
   fn exist_table(&self, db: &str, table_name: &str) -> Result<(),

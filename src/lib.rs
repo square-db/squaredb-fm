@@ -1,6 +1,7 @@
 #![crate_name = "squaredb_fm"]
 #![crate_type = "lib"]
 extern crate serde;
+extern crate sstable;
 
 pub mod fm;
 pub mod disk;

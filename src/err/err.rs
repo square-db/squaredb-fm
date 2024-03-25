@@ -31,15 +31,19 @@ pub enum FmError {
     #[error("Encryption Error: Cannot encrypt data!")]
     EncryptionError,
     #[error("OS Error: Opening File on OS level Failed!")]
-    OsError,
+    OsError(String),
     #[error("Conversion Error: Converting data to UTF-8 Failed!")]
     Utf8Error,
     #[error("IO Error: Reading/Writing data Failed!")]
-    IoError,
+    IoError(String),
     #[error("Eof Error: Couldnot open file Failed!")]
     EofError,
     #[error("Lock Guard Error: Timout exceeded when attempting to aquire a write/read lock!")]
     LockTimeout,
     #[error("Memory Error: Table was not found in the memtable!")]
     TableNotFoundInMemory,
+    #[error("Record Error: Record couldnot be serialized! Due to {0}")]
+    RecordSerializationError(String),
+    #[error("SSTable Error: SSTable couldnot be build! Due to: {0}")]
+    SSTableBuildingError(String),
 }
